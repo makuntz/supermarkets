@@ -5,17 +5,8 @@ config();
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
-  PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  API_PREFIX: z.string().default('/api'),
-  // Auth
-  JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default('15m'),
-  REFRESH_SECRET: z.string().min(32),
-  REFRESH_EXPIRES_IN: z.string().default('7d'),
-  // Storage
-  STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
-  // Queue (opcional - Redis se usar BullMQ)
+  // Queue config (se usar Redis/BullMQ)
   REDIS_URL: z.string().url().optional(),
 });
 

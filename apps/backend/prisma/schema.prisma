@@ -24,6 +24,7 @@ model Market {
   marketProducts MarketProduct[]
   offers         Offer[]
   importBatches  ImportBatch[]
+  marketUsers    MarketUser[]
 
   @@index([slug])
   @@index([isActive])
@@ -46,6 +47,9 @@ model Product {
   marketProducts MarketProduct[]
   offers         Offer[]
 
+  // Índice GIN para busca full-text será criado via migration SQL:
+  // CREATE EXTENSION IF NOT EXISTS pg_trgm;
+  // CREATE INDEX IF NOT EXISTS products_name_normalized_gin_idx ON products USING gin(name_normalized gin_trgm_ops);
   @@index([nameNormalized])
   @@index([ean])
   @@index([category])
@@ -85,7 +89,8 @@ model Offer {
   productId      String?   // Quando mapeado para produto canônico
   price          Decimal   @db.Decimal(10, 2)
   currency       String    @default("BRL")
-  validUntil     DateTime?
+  validFrom      DateTime  @default(now()) // Quando o preço começa a valer
+  validUntil     DateTime? // Quando o preço expira (null = sem expiração)
   isAvailable    Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -99,9 +104,12 @@ model Offer {
   @@index([marketId])
   @@index([productId])
   @@index([marketProductId])
+  @@index([validFrom])
   @@index([validUntil])
   @@index([isAvailable])
   @@index([productId, isAvailable, validUntil])
+  @@index([marketId, productId]) // Busca por mercado + produto
+  @@index([marketId, marketProductId]) // Busca por mercado + produto do mercado
   @@map("offers")
 }
 
@@ -113,16 +121,24 @@ model ImportBatch {
   totalRows     Int         @default(0)
   processedRows Int         @default(0)
   errorMessage  String?
+  // Auditoria
+  createdByUserId String?   // Market user que fez o upload
+  fileAssetId     String?   // Referência ao arquivo armazenado
+  summary         Json?     // Resumo opcional: { ok: number, errors: number, skipped: number }
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   // Relations
-  market     Market      @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  importRows ImportRow[]
+  market        Market      @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  createdByUser User?       @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  fileAsset     FileAsset?  @relation(fields: [fileAssetId], references: [id], onDelete: SetNull)
+  importRows    ImportRow[]
 
   @@index([marketId])
   @@index([status])
   @@index([createdAt])
+  @@index([marketId, createdAt]) // Busca por mercado ordenada por data
+  @@index([createdByUserId])
   @@map("import_batches")
 }
 
@@ -140,6 +156,7 @@ model ImportRow {
 
   @@index([importBatchId])
   @@index([status])
+  @@index([importBatchId, rowNumber]) // Busca ordenada por linha
   @@map("import_rows")
 }
 
@@ -156,6 +173,108 @@ model PriceHistory {
   @@index([offerId])
   @@index([recordedAt])
   @@map("price_history")
+}
+
+// ============================================
+// User & Authentication
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  passwordHash String // bcrypt hash
+  name      String?
+  role      UserRole @default(CONSUMER)
+  isActive  Boolean  @default(true)
+  // Consumer: login opcional (pode usar app sem auth)
+  // Market user: login obrigatório (portal)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  marketUsers    MarketUser[]
+  refreshTokens  RefreshToken[]
+  createdBatches ImportBatch[] // Batches criados por este usuário
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model MarketUser {
+  id        String   @id @default(uuid())
+  userId    String
+  marketId  String
+  role      MarketUserRole @default(OPERATOR) // Role dentro do mercado
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, marketId]) // Um usuário pode ter apenas uma relação por mercado
+  @@index([userId])
+  @@index([marketId])
+  @@index([marketId, isActive])
+  @@map("market_users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// File Storage
+// ============================================
+
+model FileAsset {
+  id          String   @id @default(uuid())
+  storageKey  String   // Chave no storage (S3 key, local path, etc)
+  url         String?  // URL pública (se disponível)
+  contentType String
+  size        Int      // Tamanho em bytes
+  provider    String   @default("local") // local, s3, gcs, etc
+  metadata    Json?    // Metadados adicionais
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  importBatches ImportBatch[]
+
+  @@index([storageKey])
+  @@index([provider])
+  @@map("file_assets")
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum UserRole {
+  CONSUMER // Usuário final (login opcional)
+  ADMIN    // Admin interno do sistema
+}
+
+enum MarketUserRole {
+  OPERATOR // Operador básico (pode fazer imports)
+  MANAGER  // Gerente (pode gerenciar usuários do mercado)
+  OWNER    // Proprietário do mercado
 }
 
 enum ImportStatus {

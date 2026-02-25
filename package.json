@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:worker": "npm run dev --workspace=apps/api-worker",
     "dev:mobile": "npm run dev --workspace=apps/mobile",
+    "dev:portal": "npm run dev --workspace=apps/market-portal",
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
