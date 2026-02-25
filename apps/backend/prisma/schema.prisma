@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Market {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  logoUrl   String?
+  website   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  marketProducts MarketProduct[]
+  offers         Offer[]
+  importBatches  ImportBatch[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@map("markets")
+}
+
+model Product {
+  id             String   @id @default(uuid())
+  name           String
+  nameNormalized String
+  brand          String?
+  size           String?
+  ean            String?  @unique
+  sku            String?
+  category       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  marketProducts MarketProduct[]
+  offers         Offer[]
+
+  @@index([nameNormalized])
+  @@index([ean])
+  @@index([category])
+  @@map("products")
+}
+
+model MarketProduct {
+  id             String   @id @default(uuid())
+  marketId       String
+  productId      String?  // Link opcional para produto canônico
+  name           String   // Nome original do mercado
+  nameNormalized String
+  ean            String?
+  sku            String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  market Market  @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  // Relations
+  offers Offer[]
+
+  @@index([marketId])
+  @@index([productId])
+  @@index([nameNormalized])
+  @@index([ean])
+  @@index([marketId, nameNormalized])
+  @@map("market_products")
+}
+
+model Offer {
+  id             String    @id @default(uuid())
+  marketId       String
+  marketProductId String?
+  productId      String?   // Quando mapeado para produto canônico
+  price          Decimal   @db.Decimal(10, 2)
+  currency       String    @default("BRL")
+  validUntil     DateTime?
+  isAvailable    Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  market        Market        @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  marketProduct MarketProduct? @relation(fields: [marketProductId], references: [id], onDelete: SetNull)
+  product       Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  priceHistory  PriceHistory[]
+
+  @@index([marketId])
+  @@index([productId])
+  @@index([marketProductId])
+  @@index([validUntil])
+  @@index([isAvailable])
+  @@index([productId, isAvailable, validUntil])
+  @@map("offers")
+}
+
+model ImportBatch {
+  id            String      @id @default(uuid())
+  marketId      String
+  fileName      String
+  status        ImportStatus @default(PENDING)
+  totalRows     Int         @default(0)
+  processedRows Int         @default(0)
+  errorMessage  String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  market     Market      @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  importRows ImportRow[]
+
+  @@index([marketId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("import_batches")
+}
+
+model ImportRow {
+  id            String         @id @default(uuid())
+  importBatchId String
+  rowNumber     Int
+  rawData       Json           // JSON com dados brutos da planilha
+  status        ImportRowStatus @default(PENDING)
+  errorMessage  String?
+  createdAt     DateTime       @default(now())
+
+  // Relations
+  importBatch ImportBatch @relation(fields: [importBatchId], references: [id], onDelete: Cascade)
+
+  @@index([importBatchId])
+  @@index([status])
+  @@map("import_rows")
+}
+
+model PriceHistory {
+  id         String   @id @default(uuid())
+  offerId   String
+  price      Decimal  @db.Decimal(10, 2)
+  currency   String   @default("BRL")
+  recordedAt DateTime @default(now())
+
+  // Relations
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+  @@index([recordedAt])
+  @@map("price_history")
+}
+
+enum ImportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ImportRowStatus {
+  PENDING
+  PROCESSED
+  ERROR
+}
+
