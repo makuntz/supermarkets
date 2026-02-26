@@ -4,7 +4,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "dev": "expo start",
+    "dev": "EXPO_USE_METRO_WORKSPACE_ROOT=0 expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
