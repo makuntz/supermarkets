@@ -21,23 +21,23 @@ export function SearchResultsScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Resultados para: "{query}"</Text>
-      {isLoading && <Text>Carregando...</Text>}
-      {error && <Text style={styles.error}>Erro: {error}</Text>}
-      {!isLoading && !error && (
-        <>
-          <Text style={styles.empty}>
-            {results.length === 0 ? 'Nenhum resultado encontrado' : `${results.length} resultados`}
-          </Text>
-          <View style={styles.testButton}>
-            <Button
-              title="Teste: Ver produto ID '1'"
-              onPress={() => {
-                navigation.navigate('ProductDetail', { productId: '1' });
-              }}
-            />
-          </View>
-        </>
+      {isLoading ? (
+        <Text style={styles.empty}>Carregando...</Text>
+      ) : error ? (
+        <Text style={styles.error}>Erro: {error}</Text>
+      ) : (
+        <Text style={styles.empty}>
+          {results.length === 0 ? 'Nenhum resultado encontrado' : `${results.length} resultados`}
+        </Text>
       )}
+      <View style={styles.testButton}>
+        <Button
+          title="Teste: Ver produto ID '1'"
+          onPress={() => {
+            navigation.navigate('ProductDetail', { productId: '1' });
+          }}
+        />
+      </View>
     </View>
   );
 }
