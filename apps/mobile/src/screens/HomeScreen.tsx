@@ -33,6 +33,14 @@ export function HomeScreen() {
         onSubmitEditing={handleSearch}
       />
       <Button title="Buscar" onPress={handleSearch} />
+      <View style={styles.testButton}>
+        <Button
+          title="Teste: Buscar 'arroz'"
+          onPress={() => {
+            navigation.navigate('SearchResults', { query: 'arroz' });
+          }}
+        />
+      </View>
     </View>
   );
 }
@@ -56,6 +64,9 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
+  },
+  testButton: {
+    marginTop: 16,
   },
 });
 

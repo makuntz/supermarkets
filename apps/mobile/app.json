@@ -1,9 +1,9 @@
 {
   "expo": {
+    "main": "index.js",
     "name": "Supermarkets",
     "slug": "supermarkets",
     "version": "0.1.0",
-    "main": "AppEntry.js",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [

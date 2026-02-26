@@ -10,7 +10,7 @@
   "scripts": {
     "dev:backend": "npm run dev --workspace=apps/backend",
     "dev:worker": "npm run dev --workspace=apps/api-worker",
-    "dev:mobile": "npm run dev --workspace=apps/mobile",
+    "dev:mobile": "cd apps/mobile && npm run dev",
     "dev:portal": "npm run dev --workspace=apps/market-portal",
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
