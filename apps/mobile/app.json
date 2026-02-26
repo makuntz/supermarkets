@@ -1,22 +1,30 @@
 {
   "expo": {
-    "main": "index.js",
-    "name": "Supermarkets",
-    "slug": "supermarkets",
-    "version": "0.1.0",
+    "name": "mobile",
+    "slug": "mobile",
+    "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.supermarkets.app"
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.supermarkets.app"
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
     },
-    "scheme": "supermarkets"
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
   }
 }
-
