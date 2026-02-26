@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: supermarkets_dev
       POSTGRES_DB: supermarkets_db
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Porta 5433 no host para evitar conflito com PostgreSQL local
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

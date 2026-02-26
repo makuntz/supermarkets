@@ -3,14 +3,9 @@
     "name": "Supermarkets",
     "slug": "supermarkets",
     "version": "0.1.0",
+    "main": "AppEntry.js",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -19,14 +14,7 @@
       "bundleIdentifier": "com.supermarkets.app"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.supermarkets.app"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
     },
     "scheme": "supermarkets"
   }
